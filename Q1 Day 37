@@ -1,66 +1,67 @@
+#include <stdio.h>
 #include <stdlib.h>
 
+#define MAX 100
+
 typedef struct {
-    int* q;
-    int f;
-    int r;
-    int n;
-} MyCircularDeque;
+    int value;
+    int priority;
+} PQNode;
 
-MyCircularDeque* myCircularDequeCreate(int k) {
-    MyCircularDeque* obj = (MyCircularDeque*)malloc(sizeof(MyCircularDeque));
-    obj->n = k + 1;
-    obj->q = (int*)malloc(sizeof(int) * obj->n);
-    obj->f = 0;
-    obj->r = 0;
-    return obj;
+PQNode pq[MAX];
+int size = 0;
+
+void enqueue(int value, int priority) {
+    int i;
+    if (size == MAX) {
+        printf("Priority Queue is full\n");
+        return;
+    }
+
+    for (i = size - 1; i >= 0 && pq[i].priority < priority; i--) {
+        pq[i + 1] = pq[i];
+    }
+
+    pq[i + 1].value = value;
+    pq[i + 1].priority = priority;
+    size++;
 }
 
-int myCircularDequeInsertFront(MyCircularDeque* obj, int value) {
-    if (myCircularDequeIsFull(obj)) return 0;
-    obj->f = (obj->f - 1 + obj->n) % obj->n;
-    obj->q[obj->f] = value;
-    return 1;
+void dequeue() {
+    if (size == 0) {
+        printf("Priority Queue is empty\n");
+        return;
+    }
+    printf("Dequeued: %d\n", pq[0].value);
+    for (int i = 0; i < size - 1; i++) {
+        pq[i] = pq[i + 1];
+    }
+    size--;
 }
 
-int myCircularDequeInsertLast(MyCircularDeque* obj, int value) {
-    if (myCircularDequeIsFull(obj)) return 0;
-    obj->q[obj->r] = value;
-    obj->r = (obj->r + 1) % obj->n;
-    return 1;
+void display() {
+    if (size == 0) {
+        printf("Priority Queue is empty\n");
+        return;
+    }
+    printf("Priority Queue elements:\n");
+    for (int i = 0; i < size; i++) {
+        printf("Value: %d, Priority: %d\n", pq[i].value, pq[i].priority);
+    }
 }
 
-int myCircularDequeDeleteFront(MyCircularDeque* obj) {
-    if (myCircularDequeIsEmpty(obj)) return 0;
-    obj->f = (obj->f + 1) % obj->n;
-    return 1;
-}
+int main() {
+    enqueue(10, 2);
+    enqueue(30, 4);
+    enqueue(20, 3);
+    enqueue(40, 1);
 
-int myCircularDequeDeleteLast(MyCircularDeque* obj) {
-    if (myCircularDequeIsEmpty(obj)) return 0;
-    obj->r = (obj->r - 1 + obj->n) % obj->n;
-    return 1;
-}
+    display();
 
-int myCircularDequeGetFront(MyCircularDeque* obj) {
-    if (myCircularDequeIsEmpty(obj)) return -1;
-    return obj->q[obj->f];
-}
+    dequeue();
+    dequeue();
 
-int myCircularDequeGetRear(MyCircularDeque* obj) {
-    if (myCircularDequeIsEmpty(obj)) return -1;
-    return obj->q[(obj->r - 1 + obj->n) % obj->n];
-}
+    display();
 
-int myCircularDequeIsEmpty(MyCircularDeque* obj) {
-    return obj->f == obj->r;
-}
-
-int myCircularDequeIsFull(MyCircularDeque* obj) {
-    return (obj->r + 1) % obj->n == obj->f;
-}
-
-void myCircularDequeFree(MyCircularDeque* obj) {
-    free(obj->q);
-    free(obj);
+    return 0;
 }
