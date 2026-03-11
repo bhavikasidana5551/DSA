@@ -1,66 +1,101 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef struct {
-    int* q;
-    int f;
-    int r;
-    int n;
-} MyCircularDeque;
+    int *heap;
+    int size;
+    int capacity;
+} MinHeap;
 
-MyCircularDeque* myCircularDequeCreate(int k) {
-    MyCircularDeque* obj = (MyCircularDeque*)malloc(sizeof(MyCircularDeque));
-    obj->n = k + 1;
-    obj->q = (int*)malloc(sizeof(int) * obj->n);
-    obj->f = 0;
-    obj->r = 0;
+void swap(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+MinHeap* createMinHeap(int capacity) {
+    MinHeap* h = (MinHeap*)malloc(sizeof(MinHeap));
+    h->heap = (int*)malloc(sizeof(int) * capacity);
+    h->size = 0;
+    h->capacity = capacity;
+    return h;
+}
+
+void heapifyUp(MinHeap* h, int index) {
+    while (index > 0 && h->heap[(index - 1) / 2] > h->heap[index]) {
+        swap(&h->heap[index], &h->heap[(index - 1) / 2]);
+        index = (index - 1) / 2;
+    }
+}
+
+void heapifyDown(MinHeap* h, int index) {
+    int smallest = index;
+    int left = 2 * index + 1;
+    int right = 2 * index + 2;
+
+    if (left < h->size && h->heap[left] < h->heap[smallest])
+        smallest = left;
+    if (right < h->size && h->heap[right] < h->heap[smallest])
+        smallest = right;
+
+    if (smallest != index) {
+        swap(&h->heap[index], &h->heap[smallest]);
+        heapifyDown(h, smallest);
+    }
+}
+
+void insertHeap(MinHeap* h, int val) {
+    if (h->size < h->capacity) {
+        h->heap[h->size++] = val;
+        heapifyUp(h, h->size - 1);
+    } else if (val > h->heap[0]) {
+        h->heap[0] = val;
+        heapifyDown(h, 0);
+    }
+}
+
+int getMin(MinHeap* h) {
+    return h->heap[0];
+}
+
+typedef struct {
+    MinHeap* heap;
+} KthLargest;
+
+KthLargest* kthLargestCreate(int k, int* nums, int numsSize) {
+    KthLargest* obj = (KthLargest*)malloc(sizeof(KthLargest));
+    obj->heap = createMinHeap(k);
+
+    for (int i = 0; i < numsSize; i++) {
+        insertHeap(obj->heap, nums[i]);
+    }
     return obj;
 }
 
-int myCircularDequeInsertFront(MyCircularDeque* obj, int value) {
-    if (myCircularDequeIsFull(obj)) return 0;
-    obj->f = (obj->f - 1 + obj->n) % obj->n;
-    obj->q[obj->f] = value;
-    return 1;
+int kthLargestAdd(KthLargest* obj, int val) {
+    insertHeap(obj->heap, val);
+    return getMin(obj->heap);
 }
 
-int myCircularDequeInsertLast(MyCircularDeque* obj, int value) {
-    if (myCircularDequeIsFull(obj)) return 0;
-    obj->q[obj->r] = value;
-    obj->r = (obj->r + 1) % obj->n;
-    return 1;
-}
-
-int myCircularDequeDeleteFront(MyCircularDeque* obj) {
-    if (myCircularDequeIsEmpty(obj)) return 0;
-    obj->f = (obj->f + 1) % obj->n;
-    return 1;
-}
-
-int myCircularDequeDeleteLast(MyCircularDeque* obj) {
-    if (myCircularDequeIsEmpty(obj)) return 0;
-    obj->r = (obj->r - 1 + obj->n) % obj->n;
-    return 1;
-}
-
-int myCircularDequeGetFront(MyCircularDeque* obj) {
-    if (myCircularDequeIsEmpty(obj)) return -1;
-    return obj->q[obj->f];
-}
-
-int myCircularDequeGetRear(MyCircularDeque* obj) {
-    if (myCircularDequeIsEmpty(obj)) return -1;
-    return obj->q[(obj->r - 1 + obj->n) % obj->n];
-}
-
-int myCircularDequeIsEmpty(MyCircularDeque* obj) {
-    return obj->f == obj->r;
-}
-
-int myCircularDequeIsFull(MyCircularDeque* obj) {
-    return (obj->r + 1) % obj->n == obj->f;
-}
-
-void myCircularDequeFree(MyCircularDeque* obj) {
-    free(obj->q);
+void kthLargestFree(KthLargest* obj) {
+    free(obj->heap->heap);
+    free(obj->heap);
     free(obj);
+}
+
+int main() {
+    int nums[] = {4, 5, 8, 2};
+    int k = 3;
+    int size = sizeof(nums) / sizeof(nums[0]);
+
+    KthLargest* obj = kthLargestCreate(k, nums, size);
+
+    printf("%d\n", kthLargestAdd(obj, 3));
+    printf("%d\n", kthLargestAdd(obj, 5));
+    printf("%d\n", kthLargestAdd(obj, 10));
+    printf("%d\n", kthLargestAdd(obj, 9));
+    printf("%d\n", kthLargestAdd(obj, 4));
+
+    kthLargestFree(obj);
+    return 0;
 }
